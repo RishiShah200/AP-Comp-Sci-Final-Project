@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import javax.swing.JOptionPane;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
 import sun.audio.AudioPlayer;
 import sun.audio.AudioStream;
@@ -26,11 +28,17 @@ public class Maze extends JPanel implements KeyListener,Runnable
 	private int dir = 0;
 	private int frameX;
 	private int frameY;
+	private Key key;
 	private Monster monster;
 	private Portal portal;
+	private Portal winGame;
 	boolean gameEnd;
+	boolean gameWin;
 	boolean playerMove;
 	boolean third;
+	boolean keyCollected;
+	String endFileName;
+	boolean hopeTxtEndGame;
 	//int musicCnt = 0;
 
 	public Maze()
@@ -39,8 +47,11 @@ public class Maze extends JPanel implements KeyListener,Runnable
 		frame.add(this);
 		createMaze("outline.txt");
 		hero = new Hero (0,4,dim,dim, Color.WHITE, Color.GREEN);
-		monster = new Monster (10,10,dim,dim,false,false,true,true,Color.RED, Color.BLACK);
+		monster = new Monster (2,60,dim,dim,Color.RED, Color.BLACK);
 		portal = new Portal (12,17,dim,dim,Color.GREEN,Color.BLACK);
+		winGame = new Portal (12,20,dim,dim,Color.RED,Color.YELLOW);
+		key = new Key (22,3,dim,dim,Color.ORANGE, Color.WHITE);
+		endFileName = "hope.txt";
 		frameX = 400;
 		frameY = 400;
 		frame.addKeyListener(this);
@@ -53,8 +64,11 @@ public class Maze extends JPanel implements KeyListener,Runnable
 
 	public void createMaze(String fileName)
 	{
+
 		walls = new ArrayList<Wall>();
 		File name = new File(fileName);
+		if(fileName.equals("hope.txt"))
+			hopeTxtEndGame = true;
 		try
 		{
 
@@ -105,11 +119,17 @@ public class Maze extends JPanel implements KeyListener,Runnable
 //adding a portal to the 2nd  maze I created
 		g2.setColor(portal.getBody());
 		g2.fill(portal.getRect());
-		g2.setColor(Color.WHITE);
+		g2.setColor(Color.ORANGE);
 		g2.setStroke(new BasicStroke(3));
 		g2.draw(portal.getRect());
+//adding the winGame portal to the hope.txt maze
+		g2.setColor(winGame.getBody());
+		g2.fill(winGame.getRect());
+		g2.setColor(Color.MAGENTA);
+		g2.setStroke(new BasicStroke(3));
+		g2.draw(winGame.getRect());
 
-//game ending
+//game ending - lost
 	if(gameEnd){
 		g2.setColor(Color.BLACK);
 		for(Wall wall: walls){
@@ -119,45 +139,93 @@ public class Maze extends JPanel implements KeyListener,Runnable
 		frame.removeAll();
 		g2.setFont(new Font("Arial", Font.BOLD,200));
 		g2.setColor(Color.RED);
-		g2.drawString("Game End", 200,200);
+		g2.drawString("Game Lost", 200,200);
 
 	}
+//game ending - win
+		if(gameWin){
+			g2.setColor(Color.BLACK);
+			for(Wall wall: walls){
+				g2.fill(wall.getRect());
+			}
+			frame.repaint();
+			frame.removeAll();
+			g2.setFont(new Font("Arial", Font.BOLD,200));
+			g2.setColor(Color.RED);
+			g2.drawString("Game Won.", 200,200);
+		}
+
+//creating the key you need for the portal to work
+	g2.setColor(key.getBody());
+	g2.fill(key.getRect());
+	g2.setColor(Color.WHITE);
+	g2.setStroke(new BasicStroke(3));
+	g2.draw(key.getRect());
+
+//if the key is collected, remove it
+	if(keyCollected){
+		g2.clearRect(key.getY()*key.getHeight(),key.getX()*key.getWidth(), key.getWidth(), key.getHeight());
+		g2.setColor(Color.BLACK);
+		g2.fillRect(key.getY()*key.getHeight(),key.getX()*key.getWidth(), key.getWidth(), key.getHeight());
+		g2.setStroke(new BasicStroke(3));
+		g2.draw(key.getRect());
+	}
+//display what all the components in the game are
 
 
 	}
+//creating the ledgend for the user to play
+
+
+
+
 	public void run()
 	{
+
+//		playMusic("wiiMusic.wav");		//wii music hmmmmmm
+		playMusic("finalDestination.wav");		//super smash bros music hmhmhmhmhmmh
+
 		while(true)
 		{
 			if(gameOn)
 			{
-			//	playMusic("darkMusic.wav");		//insert the music that i want played
-		//	System.out.println("THis is game end" + gameEnd);
-			//	System.out.println(hero.getX() + "X" + hero.getY());	printing out the coordinates for moving the hero
+					//insert the music that i want played
+				if(hero.getRect().intersects(key.getRect())){
+					keyCollected = true;
+				}
+
 				if(hero.getX() == -1 && hero.getY() == 60){
 					createMaze("hope.txt");
 					hero.setX(33);
+					winGame.setX(17);
+					winGame.setY(35);
 				}
 				if(hero.getX() == 3 && hero.getY() == -1){
 					createMaze("third.txt");		//this is the code for the third maze which I made
 					hero.setX(3);
-					hero.setY(62);
-					monster.setX(3);
-					monster.setY(60);
-				//	portal.setX(3);
-				//	portal.setY(61);
+					hero.setY(63);
+					monster.setX(15);
+					monster.setY(50);
+					portal.setX(3);
+					portal.setY(37);
 					third = true;
 				}
-				if(third && hero.getX() == 3 && hero.getY() == 63){
+				if(third && hero.getX() == 3 && hero.getY() == 64){
 					createMaze("outline.txt");
 					hero.setX(3);
-					hero.setY(-1);
+					hero.setY(0);
 				}
 				System.out.println("Hero X" + hero.getX() + "Hero Y" + hero.getY());
-				if(hero.getRect().intersects(portal.getRect())){
+				if(hero.getRect().intersects(portal.getRect())&& keyCollected){		//portal in outline which goes to hope.txt
 					createMaze("hope.txt");
 					hero.setX(30);
 					hero.setY(55);
+					monster.setX(20);
+					monster.setY(60);
+					portal.setX(300);
+					portal.setY(300);
+					winGame.setX(17);
+					winGame.setY(35);
 				}
 	/*			System.out.println("This is the hero's Y location" + hero.getY()*hero.getHeight() + "Frame" + frameY);
 				if(hero.getY()*hero.getHeight()>=frameY){
@@ -179,13 +247,8 @@ public class Maze extends JPanel implements KeyListener,Runnable
 			//	System.out.println("This is the player move" + playerMove);
 
 			System.out.println("third  boolean value" + third);		//printing the boolean value for the third maze
-				if(playerMove){
-					monster.move(walls);
-				}
-				//System.out.println(monster.getUp());
-				//System.out.println(monster.getDown());
-				//System.out.println(monster.getLeft());
-				//System.out.println(monster.getRight());
+
+
 
 					//move hero (if it can move)
 					//pick stuff up if there is stuff to be picked up
@@ -199,7 +262,12 @@ public class Maze extends JPanel implements KeyListener,Runnable
 				}
 				if(gameEnd){
 					gameOn = false;
-					playMusic("marioDie.wav");
+				//	playMusic("marioDie.wav");
+				}
+	//this is the line to win the game
+				if(hero.getRect().intersects(winGame.getRect()) && hopeTxtEndGame){	//this is the line to win the game
+					gameWin = true;
+				//	playMusic("gameWinMusic.wav");
 				}
 
 			}
@@ -216,6 +284,7 @@ public class Maze extends JPanel implements KeyListener,Runnable
 	{
 		playerMove = true;
 		dir = e.getKeyCode();
+		monster.move(hero.getX(), hero.getY(), walls);
 		hero.move(dir,walls);
 
 	}

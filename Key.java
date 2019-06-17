@@ -56,6 +56,9 @@ public class Key{
 	public Rectangle getRect(){
 			return new Rectangle( getY()*getHeight(),getX()*getWidth(), getWidth(), getHeight());
 	}
+	public void moveAway(Key k) {
+		k.setX(80); k.setY(80);
+	}
 
 }
 
